@@ -454,7 +454,7 @@ body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSyst
         </div>
         <div style="text-align:right;">
           <div id="trilhaTimer2">00:00</div>
-          <div id="trilhaKmAtivo" style="font-size:2rem;font-weight:900;letter-spacing:1px;color:var(--pri);">0 m</div>
+          <div id="trilhaKmAtivo" style="font-size:2rem;font-weight:900;letter-spacing:1px;color:#fff;">0 m</div>
           <div id="trilhaGpsStatus" style="font-size:.68rem;font-weight:700;margin-top:2px;color:var(--t3);">GPS —</div>
         </div>
       </div>
@@ -534,14 +534,16 @@ body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSyst
             <div class="chip" id="raio-50" onclick="selecionarRaio(50)">50 km</div>
           </div>
         </div>
-        <div id="tilesOfflineInfo" style="font-size:.78rem;color:var(--t3);margin-bottom:10px;">Nenhum mapa baixado ainda</div>
+        <div class="fg"><label class="lbl">Nome da região</label><input type="text" class="inp" id="regiaoNome" placeholder="Ex: Serra Catarinense"></div>
         <div id="downloadProgressWrap" style="display:none;margin-bottom:10px;">
           <div style="background:var(--bg);border-radius:8px;overflow:hidden;height:10px;"><div id="downloadBarra" style="background:var(--pri);height:100%;width:0%;"></div></div>
           <div id="downloadLabel" style="font-size:.72rem;color:var(--t3);margin-top:4px;text-align:center;">0%</div>
         </div>
         <button class="btn btn-pri" id="downloadBtnIniciar" onclick="iniciarDownloadRegiao()">Baixar região ⬇️</button>
         <button class="btn btn-ghost" id="downloadBtnCancelar" style="display:none;" onclick="cancelarDownloadRegiao()">Cancelar</button>
-        <button class="btn btn-ghost" style="margin-top:8px;color:var(--red);border-color:var(--red);" onclick="apagarMapasOffline()">🗑️ Apagar mapas offline</button>
+        <div style="font-size:.78rem;font-weight:800;color:var(--t2);margin:16px 0 8px;">📦 Mapas já baixados</div>
+        <div id="regioesOfflineList"><div style="padding:12px;font-size:.82rem;color:var(--t3);">Nenhum mapa baixado ainda.</div></div>
+        <button class="btn btn-ghost" style="margin-top:12px;color:var(--red);border-color:var(--red);" onclick="apagarMapasOffline()">🗑️ Apagar todos os mapas offline</button>
       </div>
     </div>
   </div>
@@ -619,7 +621,7 @@ body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSyst
 </div>
 
 <!-- MODAL EDITAR PONTO -->
-<div class="overlay" id="ovPonto">
+<div class="overlay" id="ovPonto" style="z-index:2100;">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><h2 id="ovPontoTit">✏️ Editar Ponto</h2><button class="close-btn" onclick="fecharModal('ovPonto')">✕</button></div>
@@ -645,7 +647,7 @@ body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSyst
 </div>
 
 <!-- MODAL NOVO REGISTRO DE DIÁRIO -->
-<div class="overlay" id="ovRegistro">
+<div class="overlay" id="ovRegistro" style="z-index:2100;">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><h2>📝 Novo registro</h2><button class="close-btn" onclick="fecharModal('ovRegistro')">✕</button></div>
@@ -804,7 +806,7 @@ body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSyst
 // ══ DB ═══════════════════════════════════════════════════════
 var DB_KEY='rastro_v1';
 var SCHEMA_VERSION=2; // v1 = sem "dias"; v2 = Excursão→Dia→Trecho
-var db={viagens:[],pontos:[],custos:[],roupas:[],excursoes:[],historicoMochila:[],dias:[],abastecimentos:[],diario:[],schemaVersion:1};
+var db={viagens:[],pontos:[],custos:[],roupas:[],excursoes:[],historicoMochila:[],dias:[],abastecimentos:[],diario:[],mapasOffline:[],schemaVersion:1};
 var viagemAtiva=null; // {id, nome, obs, inicio, watchId, buffer, timer}
 var editandoPontoId=null, editandoViagemId=null, modoRota='driving', rotaPontos=[];
 var custosViagemId=null, mochilaViagemId=null;
@@ -831,9 +833,9 @@ var CATS=[
   {id:'outro',ic:'🗺️',nome:'Outro'},
 ];
 
-function salvarDb(){try{localStorage.setItem(DB_KEY,JSON.stringify({viagens:db.viagens,pontos:db.pontos,custos:db.custos,roupas:db.roupas,excursoes:db.excursoes,historicoMochila:db.historicoMochila,dias:db.dias,abastecimentos:db.abastecimentos,diario:db.diario,schemaVersion:db.schemaVersion}));}catch(e){toast('Erro ao salvar');}}
+function salvarDb(){try{localStorage.setItem(DB_KEY,JSON.stringify({viagens:db.viagens,pontos:db.pontos,custos:db.custos,roupas:db.roupas,excursoes:db.excursoes,historicoMochila:db.historicoMochila,dias:db.dias,abastecimentos:db.abastecimentos,diario:db.diario,mapasOffline:db.mapasOffline,schemaVersion:db.schemaVersion}));}catch(e){toast('Erro ao salvar');}}
 function carregarDb(){
-  try{var r=localStorage.getItem(DB_KEY);if(r){var d=JSON.parse(r);db.viagens=d.viagens||[];db.pontos=d.pontos||[];db.custos=d.custos||[];db.roupas=d.roupas||[];db.excursoes=d.excursoes||[];db.historicoMochila=d.historicoMochila||[];db.dias=d.dias||[];db.abastecimentos=d.abastecimentos||[];db.diario=d.diario||[];db.schemaVersion=d.schemaVersion||1;}}catch(e){}
+  try{var r=localStorage.getItem(DB_KEY);if(r){var d=JSON.parse(r);db.viagens=d.viagens||[];db.pontos=d.pontos||[];db.custos=d.custos||[];db.roupas=d.roupas||[];db.excursoes=d.excursoes||[];db.historicoMochila=d.historicoMochila||[];db.dias=d.dias||[];db.abastecimentos=d.abastecimentos||[];db.diario=d.diario||[];db.mapasOffline=d.mapasOffline||[];db.schemaVersion=d.schemaVersion||1;}}catch(e){}
   migrarSchema();
 }
 // ── MIGRAÇÃO DE SCHEMA (não apaga nada — só completa o que falta) ──
@@ -1449,6 +1451,8 @@ function atualizarPreviewRegiao(){
 }
 function iniciarDownloadRegiao(){
   if(!_map){toast('Abra o mapa primeiro');return;}
+  var nomeInput=document.getElementById('regiaoNome');
+  var nome=(nomeInput&&nomeInput.value.trim())||('Região '+new Date().toLocaleDateString('pt-BR'));
   var center=obterCentroEscolhido();
   var lista=listarTilesRegiao(center.lat,center.lng,raioSelecionado,ZOOMS_OFFLINE);
   if(lista.length>LIMITE_TILES_DOWNLOAD){
@@ -1459,12 +1463,23 @@ function iniciarDownloadRegiao(){
   document.getElementById('downloadProgressWrap').style.display='block';
   document.getElementById('downloadBtnIniciar').style.display='none';
   document.getElementById('downloadBtnCancelar').style.display='block';
-  baixarTilesSequencial(lista,0,lista.length);
+  baixarTilesSequencial(lista,0,lista.length,{nome:nome,centro:center,raioKm:raioSelecionado});
 }
 function cancelarDownloadRegiao(){downloadCancelado=true;}
-function baixarTilesSequencial(lista,i,total){
-  if(downloadCancelado){toast('Download cancelado — o que já foi baixado continua salvo');finalizarDownloadUI();atualizarInfoTilesOffline();return;}
-  if(i>=total){toast('✅ Mapa offline salvo — '+total+' blocos');finalizarDownloadUI();atualizarInfoTilesOffline();return;}
+function baixarTilesSequencial(lista,i,total,meta){
+  if(downloadCancelado){
+    toast('Download cancelado — o que já foi baixado continua salvo');
+    finalizarDownloadUI();atualizarInfoTilesOffline();
+    return;
+  }
+  if(i>=total){
+    db.mapasOffline.push({id:uid(),nome:meta.nome,centro:meta.centro,raioKm:meta.raioKm,
+      tiles:lista.map(function(t){return t.z+'/'+t.x+'/'+t.y;}),total:total,criadoEm:new Date().toISOString()});
+    salvarDb();
+    toast('✅ "'+meta.nome+'" salvo offline — '+total+' blocos');
+    finalizarDownloadUI();atualizarInfoTilesOffline();
+    return;
+  }
   var t=lista[i];
   var url=TILES.rua.u.replace('{s}','a').replace('{z}',t.z).replace('{x}',t.x).replace('{y}',t.y);
   fetch(url).then(function(resp){
@@ -1477,7 +1492,7 @@ function baixarTilesSequencial(lista,i,total){
     var pct=Math.round(((i+1)/total)*100);
     var bar=document.getElementById('downloadBarra');if(bar)bar.style.width=pct+'%';
     var lbl=document.getElementById('downloadLabel');if(lbl)lbl.textContent=pct+'% ('+(i+1)+'/'+total+')';
-    setTimeout(function(){baixarTilesSequencial(lista,i+1,total);},60);
+    setTimeout(function(){baixarTilesSequencial(lista,i+1,total,meta);},60);
   });
 }
 function finalizarDownloadUI(){
@@ -1485,14 +1500,43 @@ function finalizarDownloadUI(){
   var bc=document.getElementById('downloadBtnCancelar');if(bc)bc.style.display='none';
 }
 function atualizarInfoTilesOffline(){
-  contarTilesOffline().then(function(n){
-    var el=document.getElementById('tilesOfflineInfo');
-    if(el)el.textContent=n>0?('📦 '+n+' blocos de mapa salvos offline'):'Nenhum mapa baixado ainda';
-  }).catch(function(){});
+  var el=document.getElementById('regioesOfflineList');if(!el)return;
+  if(!db.mapasOffline.length){
+    el.innerHTML='<div style="padding:12px;font-size:.82rem;color:var(--t3);">Nenhum mapa baixado ainda.</div>';
+    return;
+  }
+  el.innerHTML='';
+  db.mapasOffline.slice().sort(function(a,b){return new Date(b.criadoEm)-new Date(a.criadoEm);}).forEach(function(r){
+    var row=document.createElement('div');row.className='ponto-row';
+    row.innerHTML='<div class="ponto-info"><div class="nome">📦 '+escH(r.nome)+'</div>'+
+      '<div class="coords">'+r.raioKm+' km de raio · '+r.total+' blocos · '+fmtData(r.criadoEm)+'</div></div>';
+    var btn=document.createElement('button');btn.className='edit-btn';btn.textContent='🗑️';
+    btn.addEventListener('click',(function(id){return function(){apagarRegiaoOffline(id);};})(r.id));
+    row.appendChild(btn);el.appendChild(row);
+  });
+}
+function apagarRegiaoOffline(id){
+  var r=db.mapasOffline.find(function(x){return x.id===id;});
+  if(!r)return;
+  if(!confirm('Apagar o mapa offline "'+r.nome+'" ('+r.total+' blocos)?'))return;
+  abrirTilesDB().then(function(d){
+    var tx=d.transaction(TILE_STORE,'readwrite');
+    var store=tx.objectStore(TILE_STORE);
+    (r.tiles||[]).forEach(function(key){store.delete(key);});
+    tx.oncomplete=function(){
+      db.mapasOffline=db.mapasOffline.filter(function(x){return x.id!==id;});
+      salvarDb();
+      toast('Mapa "'+r.nome+'" apagado');
+      atualizarInfoTilesOffline();
+    };
+  }).catch(function(){toast('Erro ao apagar');});
 }
 function apagarMapasOffline(){
-  if(!confirm('Apagar todos os mapas baixados para uso offline?'))return;
-  apagarTodosTilesOffline().then(function(){toast('Mapas offline apagados');atualizarInfoTilesOffline();});
+  if(!confirm('Apagar TODOS os mapas baixados para uso offline?'))return;
+  apagarTodosTilesOffline().then(function(){
+    db.mapasOffline=[];salvarDb();
+    toast('Mapas offline apagados');atualizarInfoTilesOffline();
+  });
 }
 // Camada Leaflet que busca no IndexedDB primeiro; se não achar, busca na rede
 // (e deixa salvo pra próxima vez só se o usuário tiver baixado a região)
