@@ -1,11 +1,13 @@
-// sw-rastro.js — cache-first para o Leaflet (CDN) e o app shell,
+// sw-rastro.js — cache-first para o Leaflet e o leitor do mapa de SC (CDN) e o app shell,
 // pra o mapa funcionar mesmo sem internet depois da primeira visita.
 // Os blocos (tiles) do mapa NÃO passam por aqui — o app cuida deles
 // direto via IndexedDB (ver módulo "MAPA OFFLINE" no HTML).
-var CACHE_NAME = 'rastro-shell-v2';
+var CACHE_NAME = 'rastro-shell-v3';
 var PRECACHE_URLS = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js',
+  'https://unpkg.com/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js'
 ];
 
 self.addEventListener('install', function (event) {
@@ -36,7 +38,7 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   var req = event.request;
   var url = req.url;
-  var ehLeaflet = url.indexOf('unpkg.com/leaflet') > -1;
+  var ehLeaflet = url.indexOf('unpkg.com/leaflet') > -1 || url.indexOf('unpkg.com/pmtiles') > -1 || url.indexOf('unpkg.com/protomaps-leaflet') > -1;
 
   if (ehLeaflet) {
     // Cache-first: uma vez baixado, funciona sem internet dali em diante
